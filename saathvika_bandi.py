@@ -14,30 +14,43 @@ Original file is located at
 !apt-get install espeak
 !pip install pydub
 !pip install gtts
-
+!pip install Translator
+!pip install googletrans==4.0.0-rc1
 import speech_recognition as sr
 from gtts import gTTS
 import pyttsx3
 import IPython.display as ipd
 from pydub import AudioSegment
 
+import speech_recognition as sr
+import pyttsx3
+from googletrans import Translator
+from pydub import AudioSegment
+
+# Convert MP3 to WAV
 AudioSegment.from_mp3("/content/input.mp3").export("/content/input.wav", format="wav")
 
-# Perform speech recognition using Google's Web Speech API and transcribe spoken words from the audio file into text
+# Perform speech recognition using Google's Web Speech API and transcribe Telugu spoken words from the audio file into text
 recognizer = sr.Recognizer()
-audio_path = "/content/input.wav"
+audio_path_telugu = "/content/input.wav"
 
-# Iterating the audio file
-with sr.AudioFile(audio_path) as source:
-    audio_data = recognizer.record(source)
+# Iterating the Telugu audio file
+with sr.AudioFile(audio_path_telugu) as source_telugu:
+    audio_data_telugu = recognizer.record(source_telugu)
     # try block
     try:
-        # Recognize and transcribe spoken words from the audio file in Hindi (India) using Google's Web Speech API
-        # Here the language can be changed by changing language = "hi-IN"
-        transcription = recognizer.recognize_google(audio_data, language="hi-IN")
-        print("Transcription:", transcription)
+        # Recognize and transcribe Telugu spoken words from the audio file to text using Google's Web Speech API
+        transcription_telugu = recognizer.recognize_google(audio_data_telugu, language="te-IN")
+        print("Transcription (Telugu):", transcription_telugu)
 
-        # Initialize the pyttsx3 text-to-speech engine
+        # Translate Telugu text to Hindi using the googletrans library
+        translator = Translator()
+        translation_result = translator.translate(transcription_telugu, src='te', dest='hi')
+        transcription_hindi = translation_result.text
+
+        print("Translation (Hindi):", transcription_hindi)
+
+        # Initialize the pyttsx3 text-to-speech engine for Hindi
         engine = pyttsx3.init()
 
         # Can change the speed of the output by changing rate of the output
@@ -50,12 +63,16 @@ with sr.AudioFile(audio_path) as source:
         engine.setProperty("voice", "hindi")
 
         # The output is saved in output.mp3
-        engine.save_to_file(transcription, "output.mp3")
+        # engine.save_to_file(transcription_hindi, "/content/output.mp3")
+        hindi_tts = gTTS(text=transcription_hindi, lang="hi")
+
+        # Save the translated text as an MP3 file
+        hindi_tts.save("/content/output.mp3")
 
     except sr.UnknownValueError:
-        # If the speech is not recognised
+        # If the speech is not recognized
         print("Speech Recognition could not understand audio")
 
     except sr.RequestError as e:
-        # If the speech could not be translated by the google search API
-        print(f"Could not request results from Google Web Speech API; {e}")
+        # If there is an issue with the Google Cloud Speech API
+        print(f"Could not request results from Google Cloud Speech API; {e}")
